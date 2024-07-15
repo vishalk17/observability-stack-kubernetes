@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-config
+  namespace: observability
+data:
+  vishal-test.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: 1s
+        folder: vishalk178
+        interval: 400s
+        rules:
+          - uid: d877b5b7-8d9c-4fd6-a1cc-b088173f4ffd
+            title: Memory Utilisation (from requests)
+            condition: C
+            data:
+              - refId: A
+                relativeTimeRange:
+                  from: 3600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  datasource:
+                      type: prometheus
+                      uid: prometheus
+                  expr: sum(container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", cluster="", namespace="default",container!="", image!=""}) / sum(kube_pod_container_resource_requests{job="kube-state-metrics", cluster="", namespace="default", resource="memory"})
+                  format: time_series
+                  instant: true
+                  interval: ""
+                  intervalMs: 60000
+                  maxDataPoints: 43200
+                  refId: A
+              - refId: B
+                datasourceUid: __expr__
+                model:
+                  conditions:
+                      - evaluator:
+                          params: []
+                          type: gt
+                        operator:
+                          type: and
+                        query:
+                          params:
+                              - B
+                        reducer:
+                          params: []
+                          type: last
+                        type: query
+                  datasource:
+                      type: __expr__
+                      uid: __expr__
+                  expression: A
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  reducer: last
+                  refId: B
+                  type: reduce
+              - refId: C
+                datasourceUid: __expr__
+                model:
+                  conditions:
+                      - evaluator:
+                          params:
+                              - 0
+                          type: gt
+                        operator:
+                          type: and
+                        query:
+                          params:
+                              - C
+                        reducer:
+                          params: []
+                          type: last
+                        type: query
+                  datasource:
+                      type: __expr__
+                      uid: __expr__
+                  expression: B
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: C
+                  type: threshold
+            dashboardUid: 85a562078cdf77779eaa1add43ccec1e
+            panelId: 3
+            noDataState: NoData
+            execErrState: Error
+            for: 5m
+            annotations:
+              __dashboardUid__: 85a562078cdf77779eaa1add43ccec1e
+              __panelId__: "3"
+            labels: {}
+            isPaused: false

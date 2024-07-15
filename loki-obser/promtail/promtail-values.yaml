@@ -1,0 +1,54 @@
+config:
+  # publish data to loki
+  clients:
+    - url: http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push
+      tenant_id: 1
+
+extraVolumes:
+  - name: node-logs
+    hostPath:
+      path: /var/log
+
+extraVolumeMounts:
+  - name: node-logs
+    mountPath: /var/log/host
+    readOnly: true
+
+podSecurityContext:
+  fsGroup: 1000 #<--- change here
+
+# Allow environment variables usage
+extraArgs:
+  - -config.expand-env=true
+
+# Scrape config to read syslog file from node
+config:
+  snippets:
+    extraScrapeConfigs: |
+      # Add an additional scrape config for syslog
+      - job_name: node-syslog
+        static_configs:
+        - targets:
+          - localhost
+          labels:
+            log: syslog
+            __path__: /var/log/host/syslog
+            node_name: '${HOSTNAME}'
+
+      - job_name: node-messages
+        static_configs:
+        - targets:
+          - localhost
+          labels:
+            log: messages
+            __path__: /var/log/host/messages
+            node_name: '${HOSTNAME}'
+
+      - job_name: node-dmesg
+        static_configs:
+        - targets:
+          - localhost
+          labels:
+            log: dmesg
+            __path__: /var/log/host/dmesg
+            node_name: '${HOSTNAME}'

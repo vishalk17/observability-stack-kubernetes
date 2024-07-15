@@ -1,0 +1,68 @@
+grafana:
+  persistence:
+    enabled: true
+    existingClaim: grafana-pvc
+  grafana.ini:
+    angular_support_enabled: true    # angular js support is likely going to Deprecate , legacy flag may work for some broken dashboards.
+    smtp:  # Configuration for Grafana email notifications
+      enabled: true
+      from_name: grafana-k8s-notify
+      host: smtp.vishalk17.com
+      user: vishalkapadi95@gmail.com  # Password should be provided in a secret
+
+alertmanager:
+  configmapReload:
+    enabled: true
+  # Configuration for Alertmanager
+  alertmanagerSpec:
+    externalUrl: http://kube-prom-stack-kube-prome-alertmanager.observability.svc.cluster.local:9093/  # replace with acutal external alertmanager url
+    retention: 720h # 720h = 30 days , Time duration Alertmanager shall retain data 
+    alertmanagerConfigSelector:
+      matchLabels:
+        alertmanagerConfig: custom
+    alertmanagerConfigNamespaceSelector:
+      matchLabels:
+        alertmanagerconfig: enabled
+  #  alertmanagerConfiguration:
+  #    alertmanagerConfig: custom
+    forceEnableClusterMode: true
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: microk8s-hostpath
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 30Gi
+          selector:
+            matchLabels:
+              type: alertmanager-storage
+
+kubeControllerManager:
+  serviceMonitor:
+    insecureSkipVerify: true
+
+prometheus:
+  prometheusSpec:
+    externalUrl: http://kube-prom-stack-kube-prome-prometheus.observability.svc.cluster.local:9090/ # replace with acutal external prometheus url
+    scrapeTimeout: 30s          # Default to 30s 
+    scrapeInterval: 30s         # Default to 30s # Below 30s , It wont work 
+    evaluationInterval: 15s     # Default to 30s
+    ## How long to retain metrics
+    retention: 90d
+    # Rules yaml has to match with this label in order to take those into account
+    ruleSelector:
+      matchLabels:
+        resource: prom-custom
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: microk8s-hostpath
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 500Gi
+          selector:
+            matchLabels:
+              type: prometheus-storage

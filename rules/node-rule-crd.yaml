@@ -1,0 +1,57 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: resource-monitor-node-rules
+  labels:
+    resource: prom-custom
+spec:
+  groups:
+  - name: resource-monitor-node
+    rules:
+    - alert: HostHighCpuUtilizationWarning
+      expr: (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)) > 80
+      for: 3m
+      labels:
+        severity: warning
+      annotations:
+        timestamp: >
+          time: {{ with query "time()" }}{{ . | first | value | humanizeTimestamp }}{{ end }}
+        summary: Host high CPU utilization warning (instance {{ $labels.instance }})
+        description: "CPU utilization is above 80%\n"
+      # Triggered when CPU utilization is above 80%.
+
+    - alert: HostHighCpuUtilizationCritical
+      expr: (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)) > 90
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        timestamp: >
+          time: {{ with query "time()" }}{{ . | first | value | humanizeTimestamp }}{{ end }}
+        summary: Host high CPU utilization critical (instance {{ $labels.instance }})
+        description: "CPU utilization is critically high (above 90%)\n "
+      # Triggered when CPU utilization is above 90%.
+
+    - alert: HostMemoryWarning
+      expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 20) * on(instance) group_left(nodename) node_uname_info{nodename=~".+"}
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        timestamp: >
+          time: {{ with query "time()" }}{{ . | first | value | humanizeTimestamp }}{{ end }}
+        summary: Host memory warning (instance {{ $labels.instance }})
+        description: "Node memory is filling up (< 20% left)\n "
+      # Triggered when memory availability drops below 20%.
+
+    - alert: HostMemoryCritical
+      expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10) * on(instance) group_left(nodename) node_uname_info{nodename=~".+"}
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        timestamp: >
+          time: {{ with query "time()" }}{{ . | first | value | humanizeTimestamp }}{{ end }}
+        summary: Host memory critical (instance {{ $labels.instance }})
+        description: "Node memory is critically low (< 10% left)\n "
+      # Triggered when memory availability drops below 10%.

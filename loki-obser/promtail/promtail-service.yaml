@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail-service
+  namespace: observability
+spec:
+  selector:
+    app.kubernetes.io/instance: promtail
+    app.kubernetes.io/name: promtail
+  ports:
+    - protocol: TCP
+      port: 3101
+      targetPort: 3101
+  type: NodePort
+

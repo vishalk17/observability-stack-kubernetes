@@ -1,0 +1,205 @@
+deploymentMode: SingleBinary
+loki:
+  commonConfig:
+    ring:
+      kvstore:
+        store: inmemory
+    replication_factor: 1
+
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+      admin_api_directory: /var/loki/admin
+
+  compactor: # which compacts index shards for performance.
+    working_directory: /var/loki/compactor/retention # Directory where files can be downloaded for compaction.
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+    delete_request_store: filesystem
+
+  limits_config:
+    max_query_lookback: 2160h # 90 days
+    retention_period: 2160h # 90 days
+
+  storage_config:
+    tsdb_shipper:
+      active_index_directory: /var/loki/index
+      cache_location: /var/loki/index_cache
+    filesystem:
+      directory: /var/loki
+
+  memcached:
+    chunk_cache:
+      enabled: false
+    results_cache:
+      enabled: false
+
+  schemaConfig:
+    configs:
+    - from: 2024-01-01
+      object_store: filesystem # we're storing on filesystem so there's no real persistence here.
+      store: tsdb
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
+
+  auth_enabled: false
+
+  query_scheduler:
+    max_outstanding_requests_per_tenant: 4096
+
+  frontend:
+    max_outstanding_per_tenant: 4096
+
+  rulerConfig:
+  # Base URL of the Grafana instance.
+    external_url: "http://kube-prom-stack-grafana.observability.svc.cluster.local:80"
+  # Comma-separated list of Alertmanager URLs to send notifications to. Each
+  # Alertmanager URL is treated as a separate group in the configuration. Multiple
+    alertmanager_url: "http://kube-prom-stack-kube-prome-alertmanager.observability.svc.cluster.local:9093"
+  # Datasource UID for the dashboard.
+    datasource_uid: "loki"
+
+    enable_alertmanager_v2: true
+    #enable_api: true
+   # evaluation_interval: 20s
+
+    alertmanager_client:
+    # Skip validating server certificate. 
+      tls_insecure_skip_verify: false
+
+read:
+  replicas: 0
+backend:
+  replicas: 0
+write:
+  replicas: 0
+
+chunksCache:
+  enabled: false
+
+tableManager:
+  retention_deletes_enabled: true
+  retention_period: 2160h # 90 days
+
+resultsCache:
+  enabled: false
+
+singleBinary:
+  replicas: 1
+
+  persistence:
+    enableStatefulSetAutoDeletePVC: false
+    enabled: true
+    storageClass: microk8s-hostpath
+    selector:
+      matchLabels:
+        type: loki-storage
+
+  extraVolumeMounts:
+    - name: rules
+      mountPath: /var/loki/rules/fake
+  extraVolumes:
+    - name: rules
+      configMap:
+        name: loki-alerting-rules
+
+test:
+  enabled: false
+
+lokiCanary:
+  enabled: false
+
+# -- Set to true to skip tls verification for kube api calls.
+sidecar:
+  skipTlsVerify: false
+
+  rules:
+    # -- Label that the configmaps/secrets with rules will be marked with.
+    label: loki_rule
+    # -- Label value that the configmaps/secrets with rules will be set to.
+    labelValue: custom
+
+monitoring:
+  selfMonitoring:
+    enabled: false
+
+  rules:
+    enabled: true
+
+  rules:
+    namespace: observability
+    labels:
+      loki_rule: custom
+
+#extraObjects:
+ # - apiVersion: v1
+ #   kind: ConfigMap
+ #   metadata:
+ #     name: loki-alerting-rules
+ #     namespace: observability
+ #     labels:
+ #       loki_rule: custom
+ #   data:
+ #     loki-alerting-rules.yaml: |
+ #       groups:
+ #         - name: example
+ #           rules:
+ #           - alert: example
+ #             expr: |
+ #               sum(count_over_time({app="loki"} |= `` [$__auto])) > 0
+ #             for: 1m
+ #             labels:
+ #               severity: warning
+ #               category: logs
+ #             annotations:
+ #               message: "loki has encountered errors"
+
+# Configuration for the read pod(s)
+#read:
+#  extraVolumeMounts:
+#    - name: loki-rules
+#      mountPath: "/var/loki/rulestorage/fake"
+  
+#  extraVolumes:
+#    - name: loki-rules
+#      configMap:
+#        name: loki-alerting-rules
+
+#loki:
+#    index_gateway:
+#      ring:
+#        kvstore:
+#          store: inmemory   
+
+# Note:  loki-0 pod crashes thus disabled 
+#table_manager:
+  # -- Specifies whether the table-manager should be enabled
+ # enabled: false
+  # -- Enable deletes by retention
+  #retention_deletes_enabled: true
+  # -- Set retention period
+  #retention_period: 90d
+
+
+#loki:
+ # storage:
+  #  bucketNames:
+   #   chunks: chunks
+    #  ruler: ruler
+     # admin: admin
+#    type: s3
+ #   s3:
+  #    endpoint: http://loki-minio.observability.svc.cluster.local:9000/
+   #   secretAccessKey: supersecret
+    #  accessKeyId: enterprise-logs
+     # s3ForcePathStyle: false
+      #insecure: false
+
+#minio:
+#  enabled: true

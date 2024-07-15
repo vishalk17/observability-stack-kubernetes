@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting
+  namespace: observability
+  labels:
+    grafana_alert: "1"
+data:
+  grafana-alert.yaml: |-
+    grafana:
+      sidecar:
+        alerts:
+          label: grafana_alert
+          enabled: true
+          searchNamespace: ALL
+          labelValue: "1"
+

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: loki-pv
+  labels:
+    type: loki-storage
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 500Gi
+  hostPath:
+    #path: /non_critical_media-ceph/observability/loki
+    path: /home/ubuntu/observability/loki
+    type: DirectoryOrCreate
+ # nodeAffinity:
+  #  required:
+  #    nodeSelectorTerms:
+   #   - matchExpressions:
+    #    - key: kubernetes.io/hostname
+     #     operator: In
+      #    values:
+       #   - vishalk17
+  persistentVolumeReclaimPolicy: Retain #Retains PVs after PVC release, requiring manual admin deletion for persistent valuable data.
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem

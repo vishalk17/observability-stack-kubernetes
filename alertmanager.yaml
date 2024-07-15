@@ -1,0 +1,50 @@
+# Modified by github.com/vishalk17
+# Global configuration
+global:
+  resolve_timeout: 1m
+
+# Routing configuration
+route:
+  # Grouping criteria for alerts
+  group_by: ['...']   # '...' by adding this we can disable grouping of alerts in single notification
+                      #  this will avoid messup of notifications of alerts within single notification.
+  # Wait time before sending initial notification for a group of alerts
+  group_wait: 1s
+  # Interval between sending notifications for the same group of alerts
+  group_interval: 1s
+  # Interval between resending alerts that have been successfully sent
+  repeat_interval: 1h
+  # Receiver to send notifications to
+  receiver: 'email-alert'
+  # Routes for matching alerts
+  routes:
+    - match:
+        severity: 'critical|warning'
+
+# Receiver configuration
+receivers:
+  # Google Chat receiver
+  - name: 'Google Chat'
+    # Webhook notification configuration
+    webhook_configs:
+      - url: 'https://chat.googleapis.com/v1/spaces/AAAAVrkKI3M/messages?vishalk17_space'
+        send_resolved: true
+
+  # Email receiver
+  - name: 'email-alert'
+    # Email notification configuration
+    email_configs:
+      # To specify multiple email addresses, separate them with commas
+      # Example: 'to: 'email1@example.com, email2@example.com''
+      - to: 'vishalkapadi95@gmail.com'
+        from: 'k8s-notifications <alerting_k8s@vishalk17.com>'
+        smarthost: smtp.gmail.com:587
+        auth_username: alerting.vishalk17@gmail.com
+        auth_identity: Alertmanger-k8s
+        # SMTP password (replace with your actual password)
+        auth_password: mypass123
+        # Send resolved alerts as well
+        send_resolved: true
+        require_tls: true # false if smtp credentials doesnt support tls
+        headers:
+          subject:  '[Status: {{ .Status | toUpper }}] - [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] - [{{ .CommonLabels.severity }}] - AlertName: {{ .CommonLabels.alertname }} - Pod: {{ .CommonLabels.pod }} - Container: {{ .CommonLabels.container }}'

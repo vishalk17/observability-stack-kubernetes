@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: observability
+  labels:
+    app.kubernetes.io/component: grafana
+    app.kubernetes.io/instance: grafana
+    app.kubernetes.io/name: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana-pv
+  labels:
+    app.kubernetes.io/component: grafana
+    app.kubernetes.io/instance: grafana
+    app.kubernetes.io/name: grafana
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 30Gi
+  hostPath:
+    #path: /non_critical_media-ceph/observability/grafana
+    path: /home/ubuntu/observability/grafana
+    type: DirectoryOrCreate
+ # nodeAffinity:
+  #  required:
+  #    nodeSelectorTerms:
+   #   - matchExpressions:
+    #    - key: kubernetes.io/hostname
+     #     operator: In
+      #    values:
+       #   - vishalk17
+  persistentVolumeReclaimPolicy: Retain #Retains PVs after PVC release, requiring manual admin deletion for persistent valuable data.
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: alertmanager-pv
+  labels:
+    type: alertmanager-storage
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 30Gi
+  hostPath:
+    #path: /non_critical_media-ceph/observability/alertmanager
+    path: /home/ubuntu/observability/alertmanager
+    type: DirectoryOrCreate
+ # nodeAffinity:
+  #  required:
+  #    nodeSelectorTerms:
+   #   - matchExpressions:
+    #    - key: kubernetes.io/hostname
+     #     operator: In
+      #    values:
+       #   - vishalk17
+  persistentVolumeReclaimPolicy: Retain #Retains PVs after PVC release, requiring manual admin deletion for persistent valuable data.
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-pv
+  labels:
+    type: prometheus-storage
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 500Gi
+  hostPath:
+    #path: /non_critical_media-ceph/observability/prometheus
+    path: /home/ubuntu/observability/prometheus
+    type: DirectoryOrCreate
+ # nodeAffinity:
+  #  required:
+  #    nodeSelectorTerms:
+   #   - matchExpressions:
+    #    - key: kubernetes.io/hostname
+     #     operator: In
+      #    values:
+       #   - vishalk17
+  persistentVolumeReclaimPolicy: Retain #Retains PVs after PVC release, requiring manual admin deletion for persistent valuable data.
+  storageClassName: microk8s-hostpath
+  volumeMode: Filesystem

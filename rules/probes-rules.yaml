@@ -14,7 +14,7 @@ spec:
           time: {{ with query "time()" }}{{ . | first | value | humanizeTimestamp }}{{ end }}
         description: Readiness probe is failing.
       expr: |
-        (prober_probe_total{probe_type="Readiness",result="failed", container!="", service="prometheus-kube-prometheus-kubelet"} offset 1m) != prober_probe_total{probe_type="Readiness",result="failed", container!="", service="prometheus-kube-prometheus-kubelet"}
+        (prober_probe_total{probe_type="Readiness",result="failed", container!="", service="kube-prom-stack-kube-prome-kubelet", namespace="default"} offset 1m)
       for: 0s
       labels:
         severity: warning
